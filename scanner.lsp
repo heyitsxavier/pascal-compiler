@@ -139,8 +139,38 @@
       (getchar)) ))
 
 (defun parse-number()
-  3
-  )
+    (setq intpart 0)
+    (setq decimalpart 0)
+    (setq exponent 0)
+    (setq exponentdirection 1)
+    (setq numtype 'integer)
+    ;If this while never fires, error
+    (while (eql (charclass (peekchar)) *numeric*) (setq intpart (+ (* intpart 10) (digit-char-p (getchar))) ))
+    ;If the next character isn't a dot or e, error
+    (if (eql (peekchar) #\.)
+        (progn
+            (setq numtype 'real)
+            (getchar)
+            (while (eql (charclass (peekchar)) *numeric*) (setq decimalpart (+ (* decimalpart 10) (digit-char-p (getchar))) ))
+        )
+    )
+    (if (eql (peekchar) #\e)
+        (progn
+            (getchar)
+            (case (getchar)
+                (#\+ (setq exponentdirection 1))
+                (#\- (setq exponentdirection -1))
+                (t (setq exponent (digit-char-p t)))
+            )
+            (while (eql (charclass (peekchar)) *numeric*) 
+                (setq exponent (+ (* exponent 10) (digit-char-p (getchar))))
+            )
+        )
+    )
+    (setq n (+ intpart (/ decimalpart (expt 10 (ceiling (log decimalpart 10))))))
+    (setq n (* n (expt 10 (* exponentdirection exponent))))
+    (list 'numbertok n numtype)
+)
     
 
 ; Initialize, then call gettoken repeatedly until it returns NIL.
