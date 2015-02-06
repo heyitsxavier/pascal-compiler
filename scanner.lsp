@@ -128,7 +128,7 @@
 	      (if (eql cclass *numeric*)
 		  (parse-number)
 		  (if (char= c #\')
-		      (getstring)
+		      (parse-string)
 		      (parse-special))))) ))
 
 ; Fill this in to skip comments too...
@@ -148,6 +148,19 @@
     )
   )
 
+(defun parse-string()
+    (getchar)
+    (setq s "")
+    (while
+        (or (not (char= (peekchar) #\')) (and (char= (peekchar) #\') (char= (peek2char) #\')))
+        (progn
+            (setq escapequote (and (char= (peekchar) #\') (char= (peek2char) #\'))) 
+            (setq s (concatenate 'string s (list (getchar))))
+            (if escapequote
+                (setq s (concatenate 'string s (list (getchar)))))))
+    (getchar)
+    (list 'stringtok s) 
+)
 
 (defun parse-special()
     (setq s (string (getchar)))
