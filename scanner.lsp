@@ -141,13 +141,16 @@
 (defun parse-alpha()
     ;If first char isn't a letter, error
     (setq s (list (getchar)))
+    ;Not efficient storage
+    (setq reserved (list "array" "begin" "case" "const" "do" "downto" "else" "end" "file" "for" "function" "goto" "if" "label" "nil" "of" "packed" "procedure" "program" "record" "repeat" "set" "then" "to" "type" "until" "var" "while" "with"))
     (while 
         (or 
             (eql (charclass (peekchar)) *alpha*) 
             (eql (charclass (peekchar)) *numeric*))
         (setq s 
             (concatenate 'string s (list (getchar)))))
-    (list 'identifiertok s) 
+    (setq whichval (position s reserved :test #'string-equal))
+    (if whichval (list 'reserved (+ whichval 1)) (list 'identifiertok s))
 )
 
 (defun parse-number()
