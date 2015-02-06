@@ -124,7 +124,7 @@
     (when (setq c (peekchar))
           (setq cclass (charclass c))
 	  (if (eql cclass *alpha*)
-	      (identifier)
+	      (parse-alpha)
 	      (if (eql cclass *numeric*)
 		  (parse-number)
 		  (if (char= c #\')
@@ -137,6 +137,18 @@
     (while (and (setq c (peekchar))
 		(or (char= c #\Space) (char= c #\Tab)))
       (getchar)) ))
+
+(defun parse-alpha()
+    ;If first char isn't a letter, error
+    (setq s (list (getchar)))
+    (while 
+        (or 
+            (eql (charclass (peekchar)) *alpha*) 
+            (eql (charclass (peekchar)) *numeric*))
+        (setq s 
+            (concatenate 'string s (list (getchar)))))
+    (list 'identifiertok s) 
+)
 
 (defun parse-number()
     (setq intpart 0)
@@ -152,6 +164,7 @@
             (setq numtype 'real)
             (getchar)
             (while (eql (charclass (peekchar)) *numeric*) (setq decimalpart (+ (* decimalpart 10) (digit-char-p (getchar))) ))
+            (setq decimalpart (/ decimalpart (expt 10 (ceiling (log decimalpart 10)))))
         )
     )
     (if (eql (peekchar) #\e)
@@ -167,7 +180,7 @@
             )
         )
     )
-    (setq n (+ intpart (/ decimalpart (expt 10 (ceiling (log decimalpart 10))))))
+    (setq n (+ intpart decimalpart))
     (setq n (* n (expt 10 (* exponentdirection exponent))))
     (list 'numbertok n numtype)
 )
