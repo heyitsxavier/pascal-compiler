@@ -79,6 +79,7 @@
 ; Print a single token.  Use this for the lexical analyzer assignment.
 (defun printtoken (tok)
   (case (tokentype tok)
+    (todo (format t "TODO~%"))
     (operator (format t "~A~20T~2D  ~A~%" (tokentype tok) (tokenval tok)
 		      (aref *op-print* (tokenval tok))))
     (delimiter (format t "~A~20T~2D  ~A~%" (tokentype tok) (tokenval tok)

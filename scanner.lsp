@@ -136,11 +136,27 @@
   (let (c)
     (while (and (setq c (peekchar))
 		(or (char= c #\Space) (char= c #\Tab)))
-      (getchar)) ))
+      (getchar))
+    (if (char= (peekchar) #\{)
+      (progn
+        (while (not (char= (peekchar) #\})) (getchar))
+        (getchar)))
+    (setq c (peekchar))
+    (if (or (char= c #\Space) (char= c #\Tab) (char= c #\{))
+      (skip-blanks))
+    ;(format t "Next char is ~A~%" (peekchar)) 
+    )
+  )
+
+
+(defun parse-special()
+    (getchar)
+    (list 'todo 8)
+)
 
 (defun parse-alpha()
     ;If first char isn't a letter, error
-    (setq s (list (getchar)))
+    (setq s (string (getchar)))
     ;Not efficient storage
     (setq reserved (list "array" "begin" "case" "const" "do" "downto" "else" "end" "file" "for" "function" "goto" "if" "label" "nil" "of" "packed" "procedure" "program" "record" "repeat" "set" "then" "to" "type" "until" "var" "while" "with"))
     (while 
