@@ -150,8 +150,19 @@
 
 
 (defun parse-special()
-    (getchar)
-    (list 'todo 8)
+    (setq s (string (getchar)))
+    (setq symbolly (list "+" "-" "*" "/" ":" "=" "<" ">" "^" "." "(" ")" "," ";" ":" "[" "]"))
+    (setq operators (list "+" "-" "*" "/" ":=" "=" "<>" "<" "<=" ">=" ">" "^" "."))
+    (setq delimiters (list "," ";" ":" "(" ")" "[" "]" ".."))
+    (while
+        (member (string (peekchar)) symbolly)
+        (setq s
+            (concatenate 'string s (list (getchar)))))
+    (if (member s operators :test #'string-equal) 
+        (list 'operator (+ 1 (position s operators :test #'string-equal)))
+        (if (member s delimiters :test #'string-equal)
+            (list 'delimiter (+ 1 (position s delimiters :test #'string-equal)))
+            (format t "Error")))
 )
 
 (defun parse-alpha()
