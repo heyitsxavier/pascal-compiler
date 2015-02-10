@@ -137,14 +137,27 @@
     (while (and (setq c (peekchar))
 		(or (char= c #\Space) (char= c #\Tab)))
       (getchar))
-    (if (char= (peekchar) #\{)
+    (if (and (peekchar) (char= (peekchar) #\{))
       (progn
         (while (not (char= (peekchar) #\})) (getchar))
         (getchar)))
+    (if 
+        (and (peekchar) 
+            (peek2char) 
+            (char= (peekchar) #\() 
+            (char= (peek2char) #\*))
+        (progn
+            (while (and (peekchar) 
+                        (peek2char) 
+                        (not (and 
+                                (char= (peekchar) #\*)
+                                (char= (peek2char) #\)))))
+                    (getchar))
+        (getchar)(getchar)))
+
     (setq c (peekchar))
-    (if (or (char= c #\Space) (char= c #\Tab) (char= c #\{))
+    (if (and (peekchar) (or (char= c #\Space) (char= c #\Tab) (char= c #\{)))
       (skip-blanks))
-    ;(format t "Next char is ~A~%" (peekchar)) 
     )
   )
 
@@ -152,14 +165,25 @@
     (getchar)
     (setq s "")
     (while
-        (or (not (char= (peekchar) #\')) (and (char= (peekchar) #\') (char= (peek2char) #\')))
+        (or 
+          (not (char= (peekchar) #\')) 
+          (and (char= (peekchar) #\') 
+               (char= (peek2char) #\')))
         (progn
-            (setq escapequote (and (char= (peekchar) #\') (char= (peek2char) #\'))) 
-            (setq s (concatenate 'string s (list (getchar))))
+            (setq escapequote 
+                  (and 
+                    (char= (peekchar) #\') 
+                    (char= (peek2char) #\'))) 
+            (setq s 
+                  (concatenate 'string s 
+                               (list (getchar))))
             (if escapequote
-                (setq s (concatenate 'string s (list (getchar)))))))
+                (getchar)))) 
     (getchar)
-    (list 'stringtok s) 
+    (if 
+      (>= (length s) 15)
+      (list 'stringtok (subseq s 0 15))
+    (list 'stringtok s))
 )
 
 (defun parse-special()

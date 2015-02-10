@@ -1,4 +1,4 @@
 (load "scanner.lsp")
 (load "tokendefs.lsp")
-(read-file "graph1.pas")
+(read-file "scantst.pas")
 (test-scanner)
