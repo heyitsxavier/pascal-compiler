@@ -134,29 +134,43 @@
 ; Fill this in to skip comments too...
 (defun skip-blanks ()
   (let (c)
-    (while (and (setq c (peekchar))
-		(or (char= c #\Space) (char= c #\Tab)))
+    (while 
+      (and (setq c (peekchar))
+           (or (char= c #\Space) 
+               (char= c #\Tab)))
       (getchar))
-    (if (and (peekchar) (char= (peekchar) #\{))
+    (if 
+      (and (setq c (peekchar))
+           (char= c #\{))
       (progn
-        (while (not (char= (peekchar) #\})) (getchar))
+        (getchar)
+        (while 
+          (not 
+            (and (setq c (peekchar)) 
+                 (char= c #\})))
+          (getchar))
         (getchar)))
     (if 
-        (and (peekchar) 
-            (peek2char) 
-            (char= (peekchar) #\() 
-            (char= (peek2char) #\*))
+        (and (setq c (peekchar))
+             (setq d (peek2char))
+             (char= c #\() 
+             (char= d #\*))
         (progn
-            (while (and (peekchar) 
-                        (peek2char) 
-                        (not (and 
-                                (char= (peekchar) #\*)
-                                (char= (peek2char) #\)))))
+            (getchar)
+            (getchar)
+            (while (not (and (setq c (peekchar))
+                             (setq d (peek2char))
+                             (char= c #\*)
+                             (char= d #\))))
                     (getchar))
-        (getchar)(getchar)))
+            (getchar)
+            (getchar)))
 
-    (setq c (peekchar))
-    (if (and (peekchar) (or (char= c #\Space) (char= c #\Tab) (char= c #\{)))
+    (if (and (setq c (peekchar)) 
+             (or 
+               (char= c #\Space) 
+               (char= c #\Tab) 
+               (char= c #\{)))
       (skip-blanks))
     )
   )
@@ -192,9 +206,12 @@
     (setq operators (list "+" "-" "*" "/" ":=" "=" "<>" "<" "<=" ">=" ">" "^" "."))
     (setq delimiters (list "," ";" ":" "(" ")" "[" "]" ".."))
     (while
-        (member (string (peekchar)) symbolly)
+        (member (string (peekchar)) 
+                symbolly 
+                :test #'string-equal)
         (setq s
-            (concatenate 'string s (list (getchar)))))
+            (concatenate 'string s 
+                         (list (getchar)))))
     (if (member s operators :test #'string-equal) 
         (list 'operator (+ 1 (position s operators :test #'string-equal)))
         (if (member s delimiters :test #'string-equal)
@@ -224,33 +241,55 @@
     (setq exponentdirection 1)
     (setq numtype 'integer)
     ;If this while never fires, error
-    (while (eql (charclass (peekchar)) *numeric*) (setq intpart (+ (* intpart 10) (digit-char-p (getchar))) ))
+    (while (eql (charclass (peekchar)) 
+                          *numeric*) 
+           (setq intpart 
+                 (+ (* intpart 10) 
+                    (digit-char-p (getchar)))))
     ;If the next character isn't a dot or e, error
-    (if (eql (peekchar) #\.)
+    (if (and (eql (peekchar) #\.)
+             (not (eql (peek2char) #\.)))
         (progn
             (setq numtype 'real)
             (getchar)
-            (while (eql (charclass (peekchar)) *numeric*) (setq decimalpart (+ (* decimalpart 10) (digit-char-p (getchar))) ))
-            (setq decimalpart (/ decimalpart (expt 10 (ceiling (log decimalpart 10)))))
-        )
-    )
+            (setq accum 10)
+            (while (eql (charclass (peekchar))
+                                   *numeric*)
+                   (progn (setq decimalpart 
+                                (+ decimalpart 
+                                   (/ (digit-char-p (getchar)) accum)))
+                          (setq accum (* accum 10))))))
     (if (eql (peekchar) #\e)
         (progn
+            (setq numtype 'real)
             (getchar)
-            (case (getchar)
+            (case (peekchar)
                 (#\+ (setq exponentdirection 1))
                 (#\- (setq exponentdirection -1))
-                (t (setq exponent (digit-char-p t)))
-            )
+                (t   (setq exponent (digit-char-p (peekchar)))))
+            (getchar)
             (while (eql (charclass (peekchar)) *numeric*) 
-                (setq exponent (+ (* exponent 10) (digit-char-p (getchar))))
-            )
-        )
-    )
+                (setq exponent (+ (* exponent 10) (digit-char-p (getchar)))))))
+
+    ;(format t "~D ~D ~D ~D ~%" intpart decimalpart exponent exponentdirection)
     (setq n (+ intpart decimalpart))
-    (setq n (* n (expt 10 (* exponentdirection exponent))))
-    (list 'numbertok n numtype)
-)
+    (if (> exponent 1000)
+        (setq numtype 'error)
+        (setq n (* n 
+                   (expt 10 
+                         (* exponentdirection exponent)))))
+    (if (or 
+          (and (eql numtype 'integer)
+               (> n 2147483647))
+          (and (eql numtype 'real)
+               (or
+                 (> n 3.402823E+38)
+                 (< n 1.175495E-38)))
+          (eql numtype 'error))
+        (progn 
+            (format t "~A number out of range ~%" (string numtype))
+            (list 'numbertok 0 'error))
+        (list 'numbertok n numtype)))
     
 
 ; Initialize, then call gettoken repeatedly until it returns NIL.
