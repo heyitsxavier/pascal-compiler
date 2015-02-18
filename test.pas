@@ -1,1 +1,1 @@
-fdasf51448919 array begin116
+3.0003

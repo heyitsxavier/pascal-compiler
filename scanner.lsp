@@ -201,22 +201,29 @@
 )
 
 (defun parse-special()
-    (setq s (string (getchar)))
-    (setq symbolly (list "+" "-" "*" "/" ":" "=" "<" ">" "^" "." "(" ")" "," ";" ":" "[" "]"))
+    (setq s1 (string (peekchar)))
+    (setq s2 (concatenate 'string s1 (list(peek2char))))
     (setq operators (list "+" "-" "*" "/" ":=" "=" "<>" "<" "<=" ">=" ">" "^" "."))
     (setq delimiters (list "," ";" ":" "(" ")" "[" "]" ".."))
-    (while
-        (member (string (peekchar)) 
-                symbolly 
-                :test #'string-equal)
-        (setq s
-            (concatenate 'string s 
-                         (list (getchar)))))
-    (if (member s operators :test #'string-equal) 
-        (list 'operator (+ 1 (position s operators :test #'string-equal)))
-        (if (member s delimiters :test #'string-equal)
-            (list 'delimiter (+ 1 (position s delimiters :test #'string-equal)))
-            (format t "Error")))
+
+    (if (or
+          (member s2 operators :test #'string-equal)
+          (member s2 delimiters :test #'string-equal))
+        (progn (getchar)(getchar))
+        (if (or
+              (member s1 operators :test #'string-equal)
+              (member s1 delimiters :test #'string-equal))
+            (progn (getchar))))
+    
+    (if (member s2 operators :test #'string-equal)
+        (list 'operator (+ 1 (position s2 operators :test #'string-equal)))
+        (if (member s2 delimiters :test #'string-equal)
+            (list 'delimiter (+ 1 (position s2 delimiters :test #'string-equal)))
+            (if (member s1 operators :test #'string-equal)
+                (list 'operator (+ 1 (position s1 operators :test #'string-equal)))
+                (if (member s1 delimiters :test #'string-equal)
+                    (list 'delimiter (+ 1 (position s1 delimiters :test #'string-equal)))
+                    (format t "Unknown symbol")))))
 )
 
 (defun parse-alpha()
@@ -231,7 +238,7 @@
         (setq s 
             (concatenate 'string s (list (getchar)))))
     (setq whichval (position s reserved :test #'string-equal))
-    (if whichval (list 'reserved (+ whichval 1)) (list 'identifiertok s))
+    (if whichval (list 'reserved (+ whichval 1)) (list 'identifiertok (subseq s 0 (min 15 (length s)))))
 )
 
 (defun parse-number()
